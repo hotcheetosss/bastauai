@@ -32,6 +32,11 @@ def main() -> int:
     set_sender(greenapi.send_by_phone)
     print(f"WhatsApp-воркер запущен (deploy={deploy}). Ctrl+C для остановки.\n")
 
+    # Дебаунс: копим быстрые сообщения клиента и обрабатываем как одно
+    # после DEBOUNCE секунд тишины (как живой человек — ждём, пока допишут).
+    DEBOUNCE = 4.0
+    buffers: dict[str, dict] = {}  # phone -> {"parts": [...], "ts": float}
+
     while True:
         try:
             # 1) продвинуть конвейер (сборка сайтов, отправка ссылок)
@@ -39,30 +44,38 @@ def main() -> int:
             if moved.get("built") or moved.get("sent"):
                 print(f"[конвейер] {moved}")
 
-            # 2) забрать входящее сообщение
-            note = greenapi.receive_notification()
-            if not note:
-                time.sleep(2)
-                continue
+            # 2) забрать входящее сообщение -> в буфер (не отвечаем сразу)
+            note = greenapi.receive_notification(receive_timeout=3)
+            if note:
+                receipt = note.get("receiptId")
+                try:
+                    parsed = greenapi.parse_incoming(note.get("body") or {})
+                    if parsed:
+                        phone, text = parsed
+                        print(f"[вход] {phone}: {text}")
+                        buf = buffers.setdefault(phone, {"parts": [], "ts": 0.0})
+                        buf["parts"].append(text)
+                        buf["ts"] = time.time()
+                finally:
+                    if receipt is not None:
+                        greenapi.delete_notification(receipt)
 
-            receipt = note.get("receiptId")
-            try:
-                body = note.get("body") or {}
-                parsed = greenapi.parse_incoming(body)
-                if parsed:
-                    phone, text = parsed
-                    print(f"[вход] {phone}: {text}")
-                    reply = process_incoming(phone, text)
+            # 3) обработать буферы, где наступила тишина (склеив сообщения)
+            now = time.time()
+            for phone in list(buffers):
+                buf = buffers[phone]
+                if buf["parts"] and now - buf["ts"] >= DEBOUNCE:
+                    combined = "\n".join(buf["parts"])
+                    del buffers[phone]
+                    reply = process_incoming(phone, combined)
                     if reply:
                         greenapi.send_by_phone(phone, reply)
                         print(f"[ответ] {phone}: {reply}")
                     else:
                         print(f"[пропуск] {phone} нет в CRM — игнор")
-            finally:
-                # ВСЕГДА убираем событие из очереди — иначе одно битое
-                # сообщение зациклит воркер навсегда.
-                if receipt is not None:
-                    greenapi.delete_notification(receipt)
+
+            if not note:
+                time.sleep(1)
 
         except KeyboardInterrupt:
             print("\nОстановлен.")

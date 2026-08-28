@@ -38,9 +38,17 @@ def send_by_phone(phone: str, text: str, *, timeout: float = 20.0) -> dict[str, 
     return r.json()
 
 
-def receive_notification(*, timeout: float = 30.0) -> Optional[dict[str, Any]]:
-    """Забрать следующее входящее событие (или None, если очередь пуста)."""
-    r = httpx.get(f"{_base()}/receiveNotification/{_tok()}", timeout=timeout)
+def receive_notification(*, receive_timeout: int = 5) -> Optional[dict[str, Any]]:
+    """Забрать следующее входящее событие (или None, если очередь пуста).
+
+    receive_timeout — сколько секунд сервер держит ответ, если очередь пуста.
+    Короткое значение => цикл воркера чаще проверяет буфер (для дебаунса).
+    """
+    r = httpx.get(
+        f"{_base()}/receiveNotification/{_tok()}",
+        params={"receiveTimeout": receive_timeout},
+        timeout=receive_timeout + 15,
+    )
     r.raise_for_status()
     return r.json()  # {'receiptId': N, 'body': {...}} либо null
 
