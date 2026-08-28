@@ -30,6 +30,7 @@ class Settings:
     # --- GREEN-API (WhatsApp) ---
     GREENAPI_ID_INSTANCE: str = os.getenv("GREENAPI_ID_INSTANCE", "")
     GREENAPI_API_TOKEN: str = os.getenv("GREENAPI_API_TOKEN", "")
+    GREENAPI_API_URL: str = os.getenv("GREENAPI_API_URL", "https://api.green-api.com")
 
     # --- Деплой ---
     NETLIFY_AUTH_TOKEN: str = os.getenv("NETLIFY_AUTH_TOKEN", "")
