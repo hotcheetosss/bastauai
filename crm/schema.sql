@@ -115,6 +115,13 @@ alter table public.lead_events enable row level security;
 -- Политик не добавляем: доступ только через service_role (бэкенд). При появлении
 -- фронта-дашборда сюда добавим точечные политики на select/update.
 
+-- ---------- 6. Права для бэкенда (service_role) ----------
+-- Мы выключили "Automatically expose new tables", поэтому выдаём права вручную
+-- ТОЛЬКО роли service_role (наш бэкенд). anon/authenticated доступа не получают.
+grant all privileges on public.leads       to service_role;
+grant all privileges on public.lead_events to service_role;
+grant usage, select on all sequences in schema public to service_role;
+
 -- ============================================================
 --  Готово. Проверка: select * from public.leads;
 -- ============================================================
