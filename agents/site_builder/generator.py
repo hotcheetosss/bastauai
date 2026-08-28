@@ -11,7 +11,7 @@ import re
 from shared.config import settings
 
 # Модели по умолчанию
-GEMINI_MODEL = "gemini-2.5-flash"   # бесплатный тариф, быстрый; для качества — gemini-2.5-pro
+GEMINI_MODEL = "gemini-3.1-flash-lite"   # быстрый/дешёвый; для качества — gemini-3.1-pro-preview
 CLAUDE_MODEL = "claude-opus-5"      # для качества; дешевле — claude-sonnet-5
 MAX_OUTPUT_TOKENS = 32000
 
