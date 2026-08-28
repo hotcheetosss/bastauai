@@ -46,20 +46,23 @@ def main() -> int:
                 continue
 
             receipt = note.get("receiptId")
-            body = note.get("body") or {}
-            parsed = greenapi.parse_incoming(body)
-            if parsed:
-                phone, text = parsed
-                print(f"[вход] {phone}: {text}")
-                reply = process_incoming(phone, text)
-                if reply:
-                    greenapi.send_by_phone(phone, reply)
-                    print(f"[ответ] {phone}: {reply}")
-                else:
-                    print(f"[пропуск] {phone} нет в CRM — игнор")
-            # подтвердить обработку (даже если это был статус доставки)
-            if receipt is not None:
-                greenapi.delete_notification(receipt)
+            try:
+                body = note.get("body") or {}
+                parsed = greenapi.parse_incoming(body)
+                if parsed:
+                    phone, text = parsed
+                    print(f"[вход] {phone}: {text}")
+                    reply = process_incoming(phone, text)
+                    if reply:
+                        greenapi.send_by_phone(phone, reply)
+                        print(f"[ответ] {phone}: {reply}")
+                    else:
+                        print(f"[пропуск] {phone} нет в CRM — игнор")
+            finally:
+                # ВСЕГДА убираем событие из очереди — иначе одно битое
+                # сообщение зациклит воркер навсегда.
+                if receipt is not None:
+                    greenapi.delete_notification(receipt)
 
         except KeyboardInterrupt:
             print("\nОстановлен.")

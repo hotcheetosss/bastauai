@@ -35,18 +35,20 @@ def _merge_brief(current: dict[str, Any], upd) -> dict[str, Any]:
 
 
 def _apply_action(lead_id: str, current_status: str, action: str) -> None:
+    # force=True: решение агента авторитетно; статусы не должны бросать исключение
+    # и стопорить живой диалог (иначе воркер зациклится на одном сообщении).
     st = LeadStatus(current_status)
     if action == "qualified":
-        if st == LeadStatus.CONTACTED:
-            set_status(lead_id, LeadStatus.IN_DIALOG)
-        set_status(lead_id, LeadStatus.QUALIFIED)          # → триггерит агента №2
+        if st != LeadStatus.IN_DIALOG:
+            set_status(lead_id, LeadStatus.IN_DIALOG, force=True)
+        set_status(lead_id, LeadStatus.QUALIFIED, force=True)   # → триггерит агента №2
     elif action == "lost":
         set_status(lead_id, LeadStatus.LOST, force=True)
     elif action == "revision":
         set_status(lead_id, LeadStatus.REVISION, force=True)
     elif action == "continue":
-        if st == LeadStatus.CONTACTED:
-            set_status(lead_id, LeadStatus.IN_DIALOG)
+        if st in (LeadStatus.CONTACTED, LeadStatus.LOST):
+            set_status(lead_id, LeadStatus.IN_DIALOG, force=True)
     # handoff — статус не трогаем, ниже отдельно уведомляем человека
 
 
