@@ -32,3 +32,6 @@ parser/output/
 .idea/
 .DS_Store
 Thumbs.db
+
+# --- Сгенерированные сайты (не в git) ---
+agents/site_builder/output/
