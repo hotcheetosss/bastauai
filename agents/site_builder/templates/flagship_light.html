@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ALPHA — барбершоп в Астане</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#ffffff;
+    --bg-soft:#f6f7fb;
+    --text:#14151a;
+    --muted:#63666e;
+    --border:#eceef3;
+    --border-strong:#e0e3ea;
+    --accent:#4f6ef7;         /* дружелюбный синий */
+    --accent-ink:#ffffff;
+    --accent-soft:#eaefff;
+    /* мягкие пастельные тона для bento */
+    --c-blue:#eef2ff;   --c-blue-ink:#4f6ef7;
+    --c-green:#e9f8f0;  --c-green-ink:#1f9d66;
+    --c-amber:#fff4e6;  --c-amber-ink:#d98613;
+    --c-violet:#f3edff; --c-violet-ink:#7c5cff;
+    --c-pink:#ffeef4;   --c-pink-ink:#e0568a;
+    --radius:22px;
+    --container:1140px;
+    --ease:cubic-bezier(.2,.7,.2,1);
+    --shadow:0 10px 30px rgba(20,21,26,.06);
+    --shadow-lg:0 18px 50px rgba(20,21,26,.10);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--text);
+    font-family:'Manrope',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .container{max-width:var(--container);margin:0 auto;padding:0 24px}
+  a{color:inherit;text-decoration:none}
+  section{padding:100px 0}
+  h1,h2,h3{letter-spacing:-.03em;line-height:1.06;font-weight:800}
+  h2{font-size:clamp(2rem,4.5vw,3.1rem)}
+  .lead{color:var(--muted);font-size:1.12rem;max-width:560px}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:.8rem;font-weight:700;
+    letter-spacing:.06em;text-transform:uppercase;color:var(--accent);
+    padding:7px 14px;border-radius:100px;background:var(--accent-soft)}
+  .btn{display:inline-flex;align-items:center;gap:9px;padding:14px 26px;border-radius:100px;
+    font-weight:700;font-size:.98rem;cursor:pointer;border:1px solid transparent;
+    transition:transform .25s var(--ease),box-shadow .25s var(--ease),background .2s,border-color .2s}
+  .btn-primary{background:var(--accent);color:var(--accent-ink);box-shadow:0 8px 20px rgba(79,110,247,.28)}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(79,110,247,.36)}
+  .btn-ghost{background:#fff;color:var(--text);border-color:var(--border-strong)}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+  .icon{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+  /* NAV */
+  header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.82);
+    backdrop-filter:blur(14px);border-bottom:1px solid var(--border)}
+  .nav{display:flex;align-items:center;justify-content:space-between;height:74px}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.15rem}
+  .logo .dot{width:32px;height:32px;border-radius:11px;background:var(--accent);
+    display:grid;place-items:center;color:#fff}
+  .nav-links{display:flex;gap:32px}
+  .nav-links a{color:var(--muted);font-size:.95rem;font-weight:600;transition:color .2s}
+  .nav-links a:hover{color:var(--text)}
+  .burger{display:none;background:#fff;border:1px solid var(--border-strong);border-radius:12px;padding:9px;color:var(--text)}
+
+  /* HERO */
+  .hero{position:relative;padding:96px 0 70px;text-align:center;overflow:hidden}
+  .hero::before{content:"";position:absolute;top:-140px;left:50%;transform:translateX(-50%);
+    width:900px;height:520px;z-index:0;pointer-events:none;
+    background:radial-gradient(closest-side,rgba(79,110,247,.14),transparent),
+               radial-gradient(closest-side,rgba(124,92,255,.10),transparent);
+    background-position:35% 30%,70% 40%;background-repeat:no-repeat}
+  .hero .inner{position:relative;z-index:1;max-width:760px;margin:0 auto}
+  .hero h1{font-size:clamp(2.6rem,7vw,4.4rem);margin:22px 0 18px}
+  .hero h1 .accent{color:var(--accent)}
+  .hero .lead{margin:0 auto}
+  .hero-cta{display:flex;gap:14px;margin-top:34px;justify-content:center;flex-wrap:wrap}
+  .pills{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:34px}
+  .pill{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);
+    border-radius:100px;padding:9px 16px;font-size:.9rem;color:var(--muted);box-shadow:var(--shadow)}
+  .pill svg{color:var(--accent)}
+
+  /* STATS */
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:20px}
+  .stat{background:var(--bg-soft);border:1px solid var(--border);border-radius:var(--radius);padding:26px;text-align:center}
+  .stat .num{font-size:clamp(1.8rem,4vw,2.6rem);font-weight:800;letter-spacing:-.03em;color:var(--accent)}
+  .stat .lbl{color:var(--muted);font-size:.95rem;margin-top:4px}
+
+  /* BENTO SERVICES */
+  .section-head{max-width:640px;margin:0 auto 52px;text-align:center}
+  .section-head h2{margin:16px 0 14px}
+  .section-head .lead{margin:0 auto}
+  .bento{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  .card{border-radius:var(--radius);padding:30px;transition:transform .3s var(--ease),box-shadow .3s var(--ease);
+    background:#fff;border:1px solid var(--border);box-shadow:var(--shadow)}
+  .card:hover{transform:translateY(-6px);box-shadow:var(--shadow-lg)}
+  .card .ic{width:52px;height:52px;border-radius:15px;display:grid;place-items:center;margin-bottom:20px}
+  .card h3{font-size:1.25rem;margin-bottom:8px}
+  .card p{color:var(--muted);font-size:.98rem}
+  .card .price{margin-top:18px;font-weight:800;font-size:1.05rem}
+  .card.wide{grid-column:span 2}
+  .t-blue .ic{background:var(--c-blue);color:var(--c-blue-ink)} .t-blue .price{color:var(--c-blue-ink)}
+  .t-green .ic{background:var(--c-green);color:var(--c-green-ink)} .t-green .price{color:var(--c-green-ink)}
+  .t-amber .ic{background:var(--c-amber);color:var(--c-amber-ink)} .t-amber .price{color:var(--c-amber-ink)}
+  .t-violet .ic{background:var(--c-violet);color:var(--c-violet-ink)} .t-violet .price{color:var(--c-violet-ink)}
+  .t-pink .ic{background:var(--c-pink);color:var(--c-pink-ink)} .t-pink .price{color:var(--c-pink-ink)}
+  .card.wide.t-blue{background:linear-gradient(135deg,var(--c-blue),#fff)}
+
+  /* ABOUT */
+  .about{background:var(--bg-soft)}
+  .about-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center}
+  .about-grid .lead{margin-top:16px}
+  .about-visual{background:linear-gradient(135deg,var(--accent),#7c5cff);border-radius:var(--radius);
+    min-height:320px;display:grid;place-items:center;color:#fff;box-shadow:var(--shadow-lg);position:relative;overflow:hidden}
+  .about-visual .big{font-size:clamp(3rem,10vw,6rem);font-weight:800;letter-spacing:-.04em;opacity:.9}
+  .about-visual::after{content:"";position:absolute;width:260px;height:260px;border-radius:50%;
+    background:rgba(255,255,255,.12);top:-60px;right:-60px}
+
+  /* TESTIMONIALS */
+  .quotes{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  .quote{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:28px;box-shadow:var(--shadow)}
+  .stars{color:#f5a524;margin-bottom:14px;letter-spacing:2px}
+  .quote p{font-size:1rem;margin-bottom:20px}
+  .quote .who{display:flex;align-items:center;gap:12px}
+  .quote .av{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;
+    background:var(--accent-soft);color:var(--accent);font-weight:800}
+  .quote .who b{font-weight:700;font-size:.95rem}
+  .quote .who small{color:var(--muted);display:block;font-size:.85rem}
+
+  /* CTA */
+  .cta .box{background:linear-gradient(135deg,var(--accent),#7c5cff);border-radius:32px;
+    padding:70px 30px;text-align:center;color:#fff;box-shadow:var(--shadow-lg);position:relative;overflow:hidden}
+  .cta .box::before{content:"";position:absolute;width:340px;height:340px;border-radius:50%;
+    background:rgba(255,255,255,.10);top:-120px;left:-80px}
+  .cta .box::after{content:"";position:absolute;width:280px;height:280px;border-radius:50%;
+    background:rgba(255,255,255,.10);bottom:-120px;right:-60px}
+  .cta h2{position:relative;z-index:1;margin-bottom:14px}
+  .cta p{position:relative;z-index:1;opacity:.92;max-width:520px;margin:0 auto 28px;font-size:1.1rem}
+  .cta .btn{position:relative;z-index:1;background:#fff;color:var(--accent)}
+  .cta .btn:hover{transform:translateY(-2px)}
+
+  /* FOOTER */
+  footer{border-top:1px solid var(--border);padding:56px 0 40px}
+  .foot{display:flex;justify-content:space-between;gap:40px;flex-wrap:wrap}
+  .foot .contacts{display:flex;flex-direction:column;gap:14px}
+  .foot .contacts a,.foot .contacts span{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:.97rem}
+  .foot .contacts a:hover{color:var(--accent)}
+  .foot .contacts svg{color:var(--accent)}
+  .copy{margin-top:36px;color:var(--muted);font-size:.85rem}
+
+  @media(max-width:860px){
+    section{padding:72px 0}
+    .nav-links{display:none}.burger{display:grid;place-items:center}
+    .stats,.bento,.quotes{grid-template-columns:1fr}
+    .card.wide{grid-column:span 1}
+    .about-grid{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container nav">
+    <div class="logo"><span class="dot">
+      <svg class="icon" viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.5 15.5M14.5 14.5 20 20"/></svg>
+    </span>ALPHA</div>
+    <nav class="nav-links">
+      <a href="#services">Услуги</a>
+      <a href="#about">О нас</a>
+      <a href="#reviews">Отзывы</a>
+      <a href="#contacts">Контакты</a>
+    </nav>
+    <a href="https://wa.me/77001234567" class="btn btn-primary" style="padding:11px 20px">Записаться</a>
+    <button class="burger" aria-label="Меню"><svg class="icon" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="container inner">
+    <span class="eyebrow">👋 Барбершоп в центре Астаны</span>
+    <h1>Стрижка, которая <span class="accent">поднимает настроение</span></h1>
+    <p class="lead">Заходите как в гости: тёплая атмосфера, кофе, любимая музыка и мастера, которые сделают именно то, что вам идёт.</p>
+    <div class="hero-cta">
+      <a href="https://wa.me/77001234567" class="btn btn-primary">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M21 11.5a8.5 8.5 0 0 1-12.5 7.5L3 21l2-5.5A8.5 8.5 0 1 1 21 11.5Z"/></svg>
+        Записаться в WhatsApp
+      </a>
+      <a href="#services" class="btn btn-ghost">Услуги и цены</a>
+    </div>
+    <div class="pills">
+      <span class="pill"><svg class="icon" viewBox="0 0 24 24"><path d="m12 3 2.5 5 5.5.8-4 4 1 5.5-5-2.6-5 2.6 1-5.5-4-4 5.5-.8Z"/></svg>4.9 · 320+ отзывов</span>
+      <span class="pill"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Ежедневно 10:00–22:00</span>
+      <span class="pill"><svg class="icon" viewBox="0 0 24 24"><path d="M20 10c0 6-8 11-8 11s-8-5-8-11a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>пр. Кабанбай батыра 15</span>
+    </div>
+  </div>
+</section>
+
+<div class="container">
+  <div class="stats">
+    <div class="stat"><div class="num">8 лет</div><div class="lbl">радуем Астану</div></div>
+    <div class="stat"><div class="num">15 000+</div><div class="lbl">довольных клиентов</div></div>
+    <div class="stat"><div class="num">6</div><div class="lbl">классных мастеров</div></div>
+  </div>
+</div>
+
+<section id="services">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">Услуги</span>
+      <h2>Выбирайте, что вам по душе</h2>
+      <p class="lead">Подберём форму под ваш тип лица и настроение. Только приятная косметика и аккуратная работа.</p>
+    </div>
+    <div class="bento">
+      <div class="card wide t-blue">
+        <div class="ic"><svg class="icon" viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.5 15.5M14.5 14.5 20 20"/></svg></div>
+        <h3>Мужская стрижка</h3>
+        <p>Классика или свежие тренды — с укладкой в подарок. Выйдете с отличным настроением.</p>
+        <div class="price">от 5 000 ₸</div>
+      </div>
+      <div class="card t-green">
+        <div class="ic"><svg class="icon" viewBox="0 0 24 24"><path d="M4 6c4 2 12 2 16 0M6 6c0 6 2 10 6 10s6-4 6-10"/></svg></div>
+        <h3>Оформление бороды</h3>
+        <p>Моделирование, тёплое бритьё, уход маслами.</p>
+        <div class="price">от 3 500 ₸</div>
+      </div>
+      <div class="card t-amber">
+        <div class="ic"><svg class="icon" viewBox="0 0 24 24"><path d="M12 3v18M5 8l7-5 7 5"/></svg></div>
+        <h3>Камуфляж седины</h3>
+        <p>Естественно и незаметно, без «крашеного» эффекта.</p>
+        <div class="price">от 4 000 ₸</div>
+      </div>
+      <div class="card t-pink">
+        <div class="ic"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M5 21c0-4 3-6 7-6s7 2 7 6"/></svg></div>
+        <h3>Детская стрижка</h3>
+        <p>Весело и без слёз — для юных модников до 12 лет.</p>
+        <div class="price">от 4 000 ₸</div>
+      </div>
+      <div class="card t-violet">
+        <div class="ic"><svg class="icon" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9M12 3v9l6-3"/></svg></div>
+        <h3>Комплекс «Alpha»</h3>
+        <p>Стрижка + борода + уход. Полное преображение.</p>
+        <div class="price">от 8 000 ₸</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="about" class="about">
+  <div class="container about-grid">
+    <div>
+      <span class="eyebrow">О нас</span>
+      <h2>Место, куда хочется возвращаться</h2>
+      <p class="lead">Мы за то, чтобы поход в барбершоп был маленьким праздником. Встречаем по-доброму, наливаем кофе, включаем любимую музыку и делаем работу, которой сами гордимся. Приходите — станете своим.</p>
+    </div>
+    <div class="about-visual"><div class="big">ALPHA</div></div>
+  </div>
+</section>
+
+<section id="reviews">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">Отзывы</span>
+      <h2>Нас любят — и вот почему</h2>
+    </div>
+    <div class="quotes">
+      <div class="quote"><div class="stars">★★★★★</div>
+        <p>«Хожу только сюда. Мастера чувствуют, что тебе идёт, и делают идеально каждый раз.»</p>
+        <div class="who"><div class="av">А</div><div><b>Арман</b><small>клиент 3 года</small></div></div>
+      </div>
+      <div class="quote"><div class="stars">★★★★★</div>
+        <p>«Лучшая борода в городе. Атмосфера, кофе, музыка — отдыхаешь, пока приводят в порядок.»</p>
+        <div class="who"><div class="av">Д</div><div><b>Данияр</b><small>клиент 1 год</small></div></div>
+      </div>
+      <div class="quote"><div class="stars">★★★★★</div>
+        <p>«Привёл сына на стрижку — теперь ходим вдвоём. Ребёнку весело, мне спокойно.»</p>
+        <div class="who"><div class="av">Т</div><div><b>Тимур</b><small>клиент 2 года</small></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cta">
+  <div class="container">
+    <div class="box">
+      <h2>Запишемся на удобное время?</h2>
+      <p>Напишите нам в WhatsApp — подберём слот за пару минут. Будем рады видеть!</p>
+      <a href="https://wa.me/77001234567" class="btn">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M21 11.5a8.5 8.5 0 0 1-12.5 7.5L3 21l2-5.5A8.5 8.5 0 1 1 21 11.5Z"/></svg>
+        Записаться сейчас
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer id="contacts">
+  <div class="container foot">
+    <div>
+      <div class="logo" style="margin-bottom:16px"><span class="dot">
+        <svg class="icon" viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.5 15.5M14.5 14.5 20 20"/></svg>
+      </span>ALPHA</div>
+      <p class="lead" style="font-size:.97rem">Дружелюбный барбершоп в центре Астаны.</p>
+    </div>
+    <div class="contacts">
+      <a href="https://wa.me/77001234567"><svg class="icon" viewBox="0 0 24 24"><path d="M21 11.5a8.5 8.5 0 0 1-12.5 7.5L3 21l2-5.5A8.5 8.5 0 1 1 21 11.5Z"/></svg>+7 700 123 45 67</a>
+      <span><svg class="icon" viewBox="0 0 24 24"><path d="M20 10c0 6-8 11-8 11s-8-5-8-11a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>Астана, пр. Кабанбай батыра 15</span>
+      <span><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Ежедневно 10:00–22:00</span>
+    </div>
+  </div>
+  <div class="container copy">© 2026 ALPHA Barbershop · Сделано с заботой в Астане</div>
+</footer>
+
+</body>
+</html>

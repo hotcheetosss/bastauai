@@ -1,100 +1,121 @@
-"""Генерация HTML-сайта из ТЗ. Сменный бэкенд: Gemini (по умолчанию) или Claude.
+"""Генератор сайта: бриф -> контент (Gemini) -> рендер в НАШ шаблон -> HTML.
 
-Выбор бэкенда — переменной GENERATOR в .env ('gemini' | 'claude'),
-либо аргументом backend=... . Публичная функция одна:
-    generate_site_html(site_prompt) -> html
+Дизайн зафиксирован в templates/base.html.j2 (наш «почерк»). ИИ отдаёт только
+контент и выбор темы/акцента — слоп невозможен.
+
+Публичная функция: generate_site_html(business_name, brief, city=None) -> html
 """
 from __future__ import annotations
 
+import datetime
 import re
+from pathlib import Path
+from typing import Any
 
-from shared.config import settings
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-# Модели по умолчанию
-GEMINI_MODEL = "gemini-3.1-flash-lite"   # быстрый/дешёвый; для качества — gemini-3.1-pro-preview
-CLAUDE_MODEL = "claude-opus-5"      # для качества; дешевле — claude-sonnet-5
-MAX_OUTPUT_TOKENS = 32000
+from .content import SiteContent, extract_content
+from .icons import get_icon
 
-SYSTEM_PROMPT = """\
-Ты — сильный веб-дизайнер и фронтенд-разработчик. По ТЗ о бизнесе ты создаёшь \
-готовый одностраничный сайт (лендинг) как ОДИН HTML-файл — превью того, как \
-мог бы выглядеть сайт клиента.
+_TPL_DIR = Path(__file__).resolve().parent / "templates"
+_env = Environment(
+    loader=FileSystemLoader(str(_TPL_DIR)),
+    autoescape=select_autoescape(["html", "j2"]),
+)
 
-Жёсткие требования к результату:
-- Выводи ТОЛЬКО код HTML-файла, начиная с <!DOCTYPE html>. Без markdown, без \
-пояснений, без ``` — только сам файл.
-- Весь CSS — внутри <style> в <head>. Допустимы Google Fonts через <link>. \
-Минимальный inline-JS допустим (бургер-меню, плавный скролл). Без внешних JS-библиотек.
-- Дизайн современный, чистый, адаптивный (мобильный + десктоп). Аккуратная типографика, \
-воздух, сетка, hover-эффекты. Не шаблонно — под конкретный бизнес.
-- Язык контента — русский (если в ТЗ не сказано иначе). Тексты живые и по делу, \
-без «Lorem ipsum». Заголовки, выгоды, блок услуг, «о нас», отзывы (правдоподобные), \
-призыв к действию, контакты/футер.
-- Обязательно кнопка-CTA на WhatsApp: ссылка вида https://wa.me/<номер> если номер \
-есть в контактах; иначе — заметная кнопка «Связаться».
-- Никаких битых изображений: используй CSS-градиенты, фигуры, эмодзи или \
-inline-SVG вместо внешних картинок.
-- Сайт должен выглядеть «вау» — так, чтобы владелец бизнеса захотел его купить.
-"""
-
-_USER_TEMPLATE = "Создай сайт по этому ТЗ. Помни: в ответе — только HTML-файл.\n\n{spec}"
+_TONES = ["t-blue", "t-green", "t-amber", "t-pink", "t-violet"]
+_BURGER = ('<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+           'stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>')
 
 
-def _strip_code_fences(text: str) -> str:
-    """На случай, если модель обернёт ответ в ```html ... ```."""
-    t = (text or "").strip()
-    if t.startswith("```"):
-        t = re.sub(r"^```[a-zA-Z]*\n", "", t)
-        t = re.sub(r"\n```$", "", t)
-    return t.strip()
+def _digits(s: str) -> str:
+    return re.sub(r"\D", "", s or "")
 
 
-def _generate_gemini(site_prompt: str, model: str) -> str:
-    from google import genai
-    from google.genai import types
-
-    settings.require("GEMINI_API_KEY")
-    client = genai.Client(api_key=settings.GEMINI_API_KEY)
-    resp = client.models.generate_content(
-        model=model,
-        contents=_USER_TEMPLATE.format(spec=site_prompt),
-        config=types.GenerateContentConfig(
-            system_instruction=SYSTEM_PROMPT,
-            max_output_tokens=MAX_OUTPUT_TOKENS,
-        ),
-    )
-    return _strip_code_fences(resp.text or "")
+def _valid_hex(c: str, default: str = "#4f6ef7") -> str:
+    c = (c or "").strip()
+    return c if re.fullmatch(r"#[0-9a-fA-F]{6}", c) else default
 
 
-def _generate_claude(site_prompt: str, model: str) -> str:
-    import anthropic
+def _build_context(business_name: str, brief: dict[str, Any], content: SiteContent, city: str | None) -> dict[str, Any]:
+    contacts = (brief or {}).get("contacts") or {}
+    wa_raw = contacts.get("whatsapp") or contacts.get("phone") or ""
+    wa_digits = _digits(wa_raw)
+    phone_display = contacts.get("phone") or (("+" + wa_digits) if wa_digits else "")
 
-    settings.require("ANTHROPIC_API_KEY")
-    client = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
-    with client.messages.stream(
-        model=model,
-        max_tokens=16000,
-        system=SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": _USER_TEMPLATE.format(spec=site_prompt)}],
-    ) as stream:
-        message = stream.get_final_message()
-    html = "".join(b.text for b in message.content if b.type == "text")
-    return _strip_code_fences(html)
+    # услуги: иконки + чередование пастельных тонов
+    services = []
+    for i, s in enumerate(content.services):
+        services.append({
+            "icon": get_icon(s.icon),
+            "name": s.name,
+            "description": s.description,
+            "price": s.price,
+            "tone": _TONES[i % len(_TONES)],
+        })
+
+    # отзывы: звёзды + инициал
+    reviews = [{
+        "stars": "★★★★★",
+        "text": r.text,
+        "author": r.author,
+        "subtitle": r.subtitle,
+        "initial": (r.author or "?")[:1].upper(),
+    } for r in content.reviews]
+
+    # хлебные крошки-пилюли в hero (без выдуманного рейтинга)
+    pills = []
+    if content.stats:
+        pills.append({"icon": get_icon("star"), "text": f"{content.stats[0].num} — {content.stats[0].label}"})
+    if contacts.get("hours"):
+        pills.append({"icon": get_icon("clock"), "text": contacts["hours"]})
+    if contacts.get("address"):
+        pills.append({"icon": get_icon("pin"), "text": contacts["address"]})
+
+    logo_key = content.services[0].icon if content.services else "spark"
+
+    return {
+        "business_name": business_name,
+        "city": city or "",
+        "theme": content.theme if content.theme in ("light", "dark") else "light",
+        "accent": _valid_hex(content.accent),
+        "eyebrow": content.eyebrow,
+        "hero_title_prefix": content.hero_title_prefix,
+        "hero_title_accent": content.hero_title_accent,
+        "hero_subtitle": content.hero_subtitle,
+        "services_title": content.services_title,
+        "services_subtitle": content.services_subtitle,
+        "services": services,
+        "stats": [{"num": s.num, "label": s.label} for s in content.stats],
+        "about_title": content.about_title,
+        "about_text": content.about_text,
+        "reviews_title": content.reviews_title,
+        "reviews": reviews,
+        "cta_title": content.cta_title,
+        "cta_text": content.cta_text,
+        "footer_tagline": content.footer_tagline,
+        # контакты
+        "wa_link": f"https://wa.me/{wa_digits}" if wa_digits else "#contacts",
+        "wa_display": ("+" + wa_digits) if wa_digits else "",
+        "phone": phone_display,
+        "address": contacts.get("address", ""),
+        "hours": contacts.get("hours", ""),
+        # иконки/служебное
+        "logo_icon": get_icon(logo_key),
+        "burger_icon": _BURGER,
+        "wa_icon": get_icon("whatsapp"),
+        "pin_icon": get_icon("pin"),
+        "clock_icon": get_icon("clock"),
+        "year": datetime.date.today().year,
+    }
 
 
-def generate_site_html(
-    site_prompt: str,
-    *,
-    backend: str | None = None,
-    model: str | None = None,
-) -> str:
-    """Сгенерировать HTML-лендинг по текстовому ТЗ.
+def render_site(business_name: str, brief: dict[str, Any], content: SiteContent, city: str | None = None) -> str:
+    ctx = _build_context(business_name, brief, content, city)
+    return _env.get_template("base.html.j2").render(**ctx)
 
-    backend: 'gemini' | 'claude' (по умолчанию из settings.GENERATOR).
-    """
-    backend = (backend or settings.GENERATOR or "gemini").lower()
-    if backend == "gemini":
-        return _generate_gemini(site_prompt, model or GEMINI_MODEL)
-    if backend == "claude":
-        return _generate_claude(site_prompt, model or CLAUDE_MODEL)
-    raise ValueError(f"Неизвестный GENERATOR: {backend!r} (ожидается 'gemini' или 'claude')")
+
+def generate_site_html(business_name: str, brief: dict[str, Any], *, city: str | None = None) -> str:
+    """Полный путь: бриф -> контент (Gemini) -> рендер нашего шаблона -> HTML."""
+    content = extract_content(business_name, brief)
+    return render_site(business_name, brief, content, city=city)
