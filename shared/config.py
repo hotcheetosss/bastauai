@@ -18,8 +18,14 @@ class Settings:
     SUPABASE_URL: str = os.getenv("SUPABASE_URL", "")
     SUPABASE_SERVICE_KEY: str = os.getenv("SUPABASE_SERVICE_KEY", "")
 
+    # --- Генератор сайтов: 'gemini' (бесплатный старт) или 'claude' ---
+    GENERATOR: str = os.getenv("GENERATOR", "gemini")
+
     # --- Claude ---
     ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
+
+    # --- Gemini (Google AI Studio, бесплатный ключ) ---
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
 
     # --- GREEN-API (WhatsApp) ---
     GREENAPI_ID_INSTANCE: str = os.getenv("GREENAPI_ID_INSTANCE", "")

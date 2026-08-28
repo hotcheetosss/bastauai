@@ -1,6 +1,7 @@
 # Общие зависимости проекта bastau ai
 supabase>=2.7.0          # клиент CRM
 anthropic>=0.40.0        # Claude API (агенты)
+google-genai>=1.0.0      # Gemini API (генератор сайтов, бесплатный старт)
 pydantic>=2.7.0          # модели данных
 python-dotenv>=1.0.0     # загрузка .env
 fastapi>=0.110.0         # вебхуки агентов
