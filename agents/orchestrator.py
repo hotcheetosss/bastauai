@@ -46,7 +46,8 @@ def advance(lead_id: str, *, deploy: bool = True) -> Optional[str]:
     if lead is None:
         return None
     status = lead["status"]
-    if status == LeadStatus.QUALIFIED.value:
+    # QUALIFIED — первая сборка; REVISION — пересборка с обновлённым брифом
+    if status in (LeadStatus.QUALIFIED.value, LeadStatus.REVISION.value):
         on_qualified(lead_id, deploy=deploy)
         return "built"
     if status == LeadStatus.SITE_READY.value:
@@ -72,7 +73,7 @@ def poll_once(*, deploy: bool = True) -> dict[str, int]:
     Продакшн-воркер вызывает это по кругу (или заменяется на Supabase-webhook).
     """
     counts = {"built": 0, "sent": 0}
-    for status in (LeadStatus.QUALIFIED, LeadStatus.SITE_READY):
+    for status in (LeadStatus.QUALIFIED, LeadStatus.REVISION, LeadStatus.SITE_READY):
         for lead in leads_by_status(status):
             step = advance(lead["id"], deploy=deploy)
             if step in counts:

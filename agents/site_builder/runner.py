@@ -44,7 +44,8 @@ def build_site_for_lead(lead_id: str, *, deploy: bool = True) -> dict[str, Any]:
     if lead is None:
         raise ValueError(f"Лид не найден: {lead_id}")
 
-    set_status(lead_id, LeadStatus.BUILDING)
+    prev_status = lead["status"]  # QUALIFIED (первая сборка) или REVISION (пересборка)
+    set_status(lead_id, LeadStatus.BUILDING, force=True)
     try:
         result = build_from_brief(
             business_name=lead["business_name"],
@@ -53,7 +54,7 @@ def build_site_for_lead(lead_id: str, *, deploy: bool = True) -> dict[str, Any]:
             deploy=deploy,
         )
     except Exception:
-        set_status(lead_id, LeadStatus.QUALIFIED, force=True)  # не зависаем в BUILDING
+        set_status(lead_id, LeadStatus(prev_status), force=True)  # не зависаем в BUILDING
         raise
 
     site_url = result["site_url"]
